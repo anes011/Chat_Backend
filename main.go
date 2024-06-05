@@ -20,6 +20,7 @@ func main() {
 
 	router.HandleFunc("/uploadFile", handlers.HandleUpload).Methods("POST")
 	router.HandleFunc("/createUser", handlers.CreateUser).Methods("POST")
+	router.HandleFunc("/login", handlers.Login).Methods("POST")
 
 	fmt.Println("Server running on port 8000")
 

@@ -10,9 +10,10 @@ import (
 	"github.com/anes011/chat/pkg/database/models"
 	"github.com/anes011/chat/pkg/utils"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
+type Body struct {
 	UserName string `json:"user_name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -25,29 +26,34 @@ type UserResponse struct {
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	user := User{}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		utils.RespondWithJson(w, 400, &UserResponse{
-			Success: false,
-			Msg:     fmt.Sprintf("Error parsing json: %v", err),
-		})
+	body := Body{}
+	json.NewDecoder(r.Body).Decode(&body)
+
+	//Hashing the user password before saving it
+	bytes, bError := bcrypt.GenerateFromPassword([]byte(body.Password), 14)
+
+	if bError != nil {
+		http.Error(w, fmt.Sprintf("Error hashing password: %v", bError), 400)
+		return
 	}
 
+	//Saving user into database
 	err := controllers.CreateUser(&models.User{
 		ID:        uuid.New(),
-		UserName:  user.UserName,
-		Email:     user.Email,
-		Password:  user.Password,
-		Photo:     user.Photo,
+		UserName:  body.UserName,
+		Email:     body.Email,
+		Password:  string(bytes),
+		Photo:     body.Photo,
 		CreatedAt: time.Now().UTC(),
 	})
 
 	if err != nil {
-		utils.RespondWithJson(w, 400, err)
-	} else {
-		utils.RespondWithJson(w, 201, &UserResponse{
-			Success: true,
-			Msg:     "User created successfully!",
-		})
+		http.Error(w, fmt.Sprintf("Error creating user: %v", err), 400)
+		return
 	}
+
+	utils.RespondWithJson(w, 201, &UserResponse{
+		Success: true,
+		Msg:     "User created successfully!",
+	})
 }

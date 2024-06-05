@@ -5,7 +5,7 @@ CREATE TABLE users(
     user_name TEXT NOT NULL,
     email TEXT NOT NULL,
     pass TEXT NOT NULL,
-    photo TEXT,
+    photo TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL
 );
 
